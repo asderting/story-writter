@@ -17,6 +17,7 @@ import * as db from '@/lib/db';
 interface GenerationState {
   isGenerating: boolean;
   streamingText: string;
+  error: string | null;
   candidates: GenerationResult[];
   currentAction: GenerationAction;
   instruction: string;
@@ -79,6 +80,7 @@ const defaultContextConfig: ContextLayerConfig = {
 export const useGenerationStore = create<GenerationState>((set, get) => ({
   isGenerating: false,
   streamingText: '',
+  error: null,
   candidates: [],
   currentAction: 'continue',
   instruction: '',
@@ -127,7 +129,7 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
     const adapter = createBackendAdapter(backend);
     const abortController = new AbortController();
 
-    set({ isGenerating: true, streamingText: '', _abortController: abortController });
+    set({ isGenerating: true, streamingText: '', error: null, _abortController: abortController });
 
     try {
       // Compose context
@@ -175,6 +177,10 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
       });
 
       const modelName = project.activeModelId || backend.defaultModel || '';
+
+      if (!modelName) {
+        throw new Error('No model selected. Please select a model in the Models section.');
+      }
 
       if (state.parameters.streaming) {
         // Streaming generation
@@ -262,6 +268,7 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
     } catch (e: any) {
       if (e.name !== 'AbortError') {
         console.error('Generation error:', e);
+        set({ error: e.message || 'Generation failed' });
       }
     } finally {
       set({ isGenerating: false, _abortController: null });

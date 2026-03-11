@@ -56,9 +56,11 @@ export function ModelsSection() {
 
   const handleSetActive = (backendId: string, modelName?: string) => {
     if (project) {
+      // Auto-select first available model if none specified
+      const effectiveModel = modelName || (availableModels[backendId] || [])[0] || undefined;
       updateProject(project.id, {
         activeBackendId: backendId,
-        ...(modelName ? { activeModelId: modelName } : {}),
+        activeModelId: effectiveModel,
       });
     }
   };

@@ -47,6 +47,7 @@ export default function App() {
   const setAction = useGenerationStore((s) => s.setAction);
 
   const loadProjectMemory = useMemoryStore((s) => s.loadProjectMemory);
+  const clearMemory = useMemoryStore((s) => s.clearMemory);
 
   // Derived
   const project = getActiveProject();
@@ -69,8 +70,10 @@ export default function App() {
     if (activeProjectId) {
       loadSnapshots(activeProjectId);
       loadProjectMemory(activeProjectId);
+    } else {
+      clearMemory();
     }
-  }, [activeProjectId, loadSnapshots, loadProjectMemory]);
+  }, [activeProjectId, loadSnapshots, loadProjectMemory, clearMemory]);
 
   // Handlers
   const handleTitleChange = useCallback(

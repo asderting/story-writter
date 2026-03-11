@@ -34,6 +34,7 @@ export function GenerateSection() {
   const parameters = useGenerationStore((s) => s.parameters);
   const contextConfig = useGenerationStore((s) => s.contextConfig);
   const isGenerating = useGenerationStore((s) => s.isGenerating);
+  const error = useGenerationStore((s) => s.error);
 
   const setAction = useGenerationStore((s) => s.setAction);
   const setInstruction = useGenerationStore((s) => s.setInstruction);
@@ -194,7 +195,7 @@ export function GenerateSection() {
       {/* Generate button */}
       <button
         onClick={isGenerating ? cancelGeneration : generate}
-        disabled={!project.activeBackendId}
+        disabled={!project.activeBackendId || !project.activeModelId}
         className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
           isGenerating
             ? 'bg-red-600 hover:bg-red-700 text-white'
@@ -216,6 +217,18 @@ export function GenerateSection() {
         <p className="text-xs text-amber-500 text-center">
           Configure a backend in the Models section first
         </p>
+      )}
+
+      {project.activeBackendId && !project.activeModelId && (
+        <p className="text-xs text-amber-500 text-center">
+          No model selected. Go to Models and select a model first.
+        </p>
+      )}
+
+      {error && (
+        <div className="bg-red-900/30 border border-red-800 rounded-lg p-3 text-sm text-red-300">
+          {error}
+        </div>
       )}
     </div>
   );
