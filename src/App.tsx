@@ -2,6 +2,16 @@ import { useEffect, useState, useCallback } from 'react';
 import { AppSidebar, type SidebarSection } from '@/components/sidebar/AppSidebar';
 import { TopBar } from '@/components/TopBar';
 import { StatusBar } from '@/components/StatusBar';
+import { EditorSection } from '@/components/sections/EditorSection';
+import { ProjectsSection } from '@/components/sections/ProjectsSection';
+import { GenerateSection } from '@/components/sections/GenerateSection';
+import { EditSection } from '@/components/sections/EditSection';
+import { LorebookSection } from '@/components/sections/LorebookSection';
+import { CharactersSection } from '@/components/sections/CharactersSection';
+import { PresetsSection } from '@/components/sections/PresetsSection';
+import { ModelsSection } from '@/components/sections/ModelsSection';
+import { HistorySection } from '@/components/sections/HistorySection';
+import { SettingsSection } from '@/components/sections/SettingsSection';
 import { useProjectStore } from '@/stores/projectStore';
 import { useBackendStore } from '@/stores/backendStore';
 import { useEditorStore } from '@/stores/editorStore';
@@ -9,49 +19,6 @@ import { usePresetStore } from '@/stores/presetStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useGenerationStore } from '@/stores/generationStore';
 import { useMemoryStore } from '@/stores/memoryStore';
-import { cn } from '@/lib/utils';
-import {
-  FolderOpen,
-  PenTool,
-  Sparkles,
-  Wand2,
-  BookOpen,
-  Users,
-  SlidersHorizontal,
-  Server,
-  Clock,
-  Settings,
-} from 'lucide-react';
-
-// --- Placeholder section components ---
-
-const sectionMeta: Record<SidebarSection, { label: string; icon: React.ElementType }> = {
-  projects: { label: 'Projects', icon: FolderOpen },
-  editor: { label: 'Editor', icon: PenTool },
-  generate: { label: 'Generate', icon: Sparkles },
-  edit: { label: 'Edit / Rewrite', icon: Wand2 },
-  lorebook: { label: 'Lorebook', icon: BookOpen },
-  characters: { label: 'Characters', icon: Users },
-  presets: { label: 'Presets', icon: SlidersHorizontal },
-  models: { label: 'Models', icon: Server },
-  history: { label: 'History', icon: Clock },
-  settings: { label: 'Settings', icon: Settings },
-};
-
-function SectionPlaceholder({ section }: { section: SidebarSection }) {
-  const meta = sectionMeta[section];
-  const Icon = meta.icon;
-
-  return (
-    <div className="flex flex-col items-center justify-center h-full text-zinc-500 gap-4">
-      <Icon className="h-12 w-12 text-zinc-600" />
-      <h2 className="text-xl font-semibold text-zinc-300">{meta.label}</h2>
-      <p className="text-sm text-zinc-500">This section is under construction.</p>
-    </div>
-  );
-}
-
-// --- Main App ---
 
 export default function App() {
   const [activeSection, setActiveSection] = useState<SidebarSection>('projects');
@@ -63,11 +30,9 @@ export default function App() {
   const updateProject = useProjectStore((s) => s.updateProject);
 
   const loadBackends = useBackendStore((s) => s.loadBackends);
-  const backends = useBackendStore((s) => s.backends);
   const getBackend = useBackendStore((s) => s.getBackend);
 
   const loadPresets = usePresetStore((s) => s.loadPresets);
-  const presets = usePresetStore((s) => s.presets);
   const getPreset = usePresetStore((s) => s.getPreset);
 
   const loadSettings = useSettingsStore((s) => s.loadSettings);
@@ -78,6 +43,10 @@ export default function App() {
   const loadSnapshots = useEditorStore((s) => s.loadSnapshots);
 
   const isGenerating = useGenerationStore((s) => s.isGenerating);
+  const generate = useGenerationStore((s) => s.generate);
+  const setAction = useGenerationStore((s) => s.setAction);
+
+  const loadProjectMemory = useMemoryStore((s) => s.loadProjectMemory);
 
   // Derived
   const project = getActiveProject();
@@ -99,8 +68,9 @@ export default function App() {
   useEffect(() => {
     if (activeProjectId) {
       loadSnapshots(activeProjectId);
+      loadProjectMemory(activeProjectId);
     }
-  }, [activeProjectId, loadSnapshots]);
+  }, [activeProjectId, loadSnapshots, loadProjectMemory]);
 
   // Handlers
   const handleTitleChange = useCallback(
@@ -109,23 +79,57 @@ export default function App() {
         updateProject(project.id, { title });
       }
     },
-    [project, updateProject]
+    [project, updateProject],
   );
 
   const handleContinue = useCallback(() => {
-    // Will be implemented when generation panel is built
-  }, []);
+    if (!project?.activeBackendId) return;
+    setAction('continue');
+    generate();
+  }, [project, setAction, generate]);
 
   const handleGenerate = useCallback(() => {
-    // Will be implemented when generation panel is built
-  }, []);
+    if (!project?.activeBackendId) return;
+    generate();
+  }, [project, generate]);
 
   const handleSaveSnapshot = useCallback(() => {
     if (project) {
-      const saveSnapshot = useEditorStore.getState().saveSnapshot;
-      saveSnapshot(project.id, `Snapshot ${new Date().toLocaleString()}`);
+      const createSnapshot = useEditorStore.getState().createSnapshot;
+      createSnapshot(project.id, `Snapshot ${new Date().toLocaleString()}`);
     }
   }, [project]);
+
+  const handleOpenProject = useCallback(() => {
+    setActiveSection('editor');
+  }, []);
+
+  const renderSection = () => {
+    switch (activeSection) {
+      case 'projects':
+        return <ProjectsSection onOpenProject={handleOpenProject} />;
+      case 'editor':
+        return <EditorSection />;
+      case 'generate':
+        return <GenerateSection />;
+      case 'edit':
+        return <EditSection />;
+      case 'lorebook':
+        return <LorebookSection />;
+      case 'characters':
+        return <CharactersSection />;
+      case 'presets':
+        return <PresetsSection />;
+      case 'models':
+        return <ModelsSection />;
+      case 'history':
+        return <HistorySection />;
+      case 'settings':
+        return <SettingsSection />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="flex h-screen w-screen bg-zinc-900 text-zinc-100 overflow-hidden">
@@ -148,9 +152,7 @@ export default function App() {
         />
 
         {/* Content area */}
-        <main className="flex-1 overflow-auto">
-          <SectionPlaceholder section={activeSection} />
-        </main>
+        <main className="flex-1 overflow-auto">{renderSection()}</main>
 
         {/* Status bar */}
         <StatusBar

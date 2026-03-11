@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
-export interface TooltipProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface TooltipProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'content'> {
   content: React.ReactNode;
   side?: 'top' | 'bottom' | 'left' | 'right';
   delayMs?: number;
@@ -10,7 +10,7 @@ export interface TooltipProps extends React.HTMLAttributes<HTMLDivElement> {
 const Tooltip = React.forwardRef<HTMLDivElement, TooltipProps>(
   ({ className, content, side = 'top', delayMs = 200, children, ...props }, ref) => {
     const [visible, setVisible] = React.useState(false);
-    const timeoutRef = React.useRef<ReturnType<typeof setTimeout>>();
+    const timeoutRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
 
     const showTooltip = () => {
       timeoutRef.current = setTimeout(() => setVisible(true), delayMs);

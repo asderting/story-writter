@@ -1022,3 +1022,83 @@ export function createProjectFromTemplate(
 
   return project;
 }
+
+// ============================================================================
+// Convenience Wrappers (flat function API used by stores)
+// ============================================================================
+
+// Projects
+export const getAllProjects = () => projects.getAll();
+export const getProject = (id: string) => projects.get(id);
+export const createProject = (data: Partial<Project>) =>
+  projects.create(data as Omit<Project, 'id' | 'createdAt' | 'updatedAt'>);
+export const updateProject = (id: string, updates: Partial<Project>) => projects.update(id, updates);
+export const deleteProject = (id: string) => projects.deleteCascade(id);
+
+// Backends
+export const getAllBackends = () => backends.getAll();
+export const createBackend = (data: Partial<Backend>) =>
+  backends.create(data as Omit<Backend, 'id' | 'createdAt' | 'updatedAt'>);
+export const updateBackend = (id: string, updates: Partial<Backend>) => backends.update(id, updates);
+export const deleteBackend = (id: string) => backends.delete(id);
+
+// Presets
+export const getAllPresets = () => presets.getAll();
+export const createPreset = (data: Partial<Preset>) =>
+  presets.create(data as Omit<Preset, 'id' | 'createdAt' | 'updatedAt'>);
+export const updatePreset = (id: string, updates: Partial<Preset>) => presets.update(id, updates);
+export const deletePreset = (id: string) => presets.delete(id);
+
+// Characters
+export const getCharactersByProject = (projectId: string) => characterSheets.getByProject(projectId);
+export const createCharacter = (data: Partial<CharacterSheet>) =>
+  characterSheets.create(data as Omit<CharacterSheet, 'id' | 'createdAt' | 'updatedAt'>);
+export const updateCharacter = (id: string, updates: Partial<CharacterSheet>) => characterSheets.update(id, updates);
+export const deleteCharacter = (id: string) => characterSheets.delete(id);
+
+// Settings (world settings)
+export const getSettingsByProject = (projectId: string) => settingSheets.getByProject(projectId);
+export const createSetting = (data: Partial<SettingSheet>) =>
+  settingSheets.create(data as Omit<SettingSheet, 'id' | 'createdAt' | 'updatedAt'>);
+export const updateSetting = (id: string, updates: Partial<SettingSheet>) => settingSheets.update(id, updates);
+export const deleteSetting = (id: string) => settingSheets.delete(id);
+
+// Environments
+export const getEnvironmentsByProject = (projectId: string) => environmentSheets.getByProject(projectId);
+export const createEnvironment = (data: Partial<EnvironmentSheet>) =>
+  environmentSheets.create(data as Omit<EnvironmentSheet, 'id' | 'createdAt' | 'updatedAt'>);
+export const updateEnvironment = (id: string, updates: Partial<EnvironmentSheet>) => environmentSheets.update(id, updates);
+export const deleteEnvironment = (id: string) => environmentSheets.delete(id);
+
+// Lore Entries
+export const getLoreEntriesByProject = (projectId: string) => loreEntries.getByProject(projectId);
+export const createLoreEntry = (data: Partial<LoreEntry>) =>
+  loreEntries.create(data as Omit<LoreEntry, 'id' | 'createdAt' | 'updatedAt'>);
+export const updateLoreEntry = (id: string, updates: Partial<LoreEntry>) => loreEntries.update(id, updates);
+export const deleteLoreEntry = (id: string) => loreEntries.delete(id);
+
+// Snapshots
+export const getSnapshotsByProject = (projectId: string) => snapshots.getByProject(projectId);
+export const createSnapshot = (data: Omit<Snapshot, 'id' | 'createdAt'>) => snapshots.create(data);
+export const getSnapshot = (id: string) => snapshots.get(id);
+export const deleteSnapshot = (id: string) => snapshots.delete(id);
+
+// Revisions
+export const getRevisionsByProject = (projectId: string) => revisions.getByProject(projectId);
+
+// Generation History
+export const getGenerationHistoryByProject = (projectId: string) => generationHistory.getByProject(projectId);
+export const createGenerationHistory = (data: Omit<GenerationHistory, 'id' | 'createdAt'>) =>
+  generationHistory.create(data);
+
+// Memory
+export const getStoryMemory = (projectId: string) => storyMemory.get(projectId);
+export const upsertStoryMemory = (projectId: string, content: string) => storyMemory.upsert(projectId, content);
+export const getWritingStyleMemory = (projectId: string) => writingStyleMemory.get(projectId);
+export const upsertWritingStyleMemory = (projectId: string, content: string) => writingStyleMemory.upsert(projectId, content);
+export const getSceneMemory = (projectId: string) => sceneMemory.get(projectId);
+export const upsertSceneMemory = (projectId: string, content: string) => sceneMemory.upsert(projectId, content);
+
+// App Settings
+export const getAppSettings = () => appSettings.get();
+export const updateAppSettings = (updates: Partial<AppSettings>) => appSettings.update(updates);

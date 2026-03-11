@@ -23,6 +23,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@tailwindcss/postcss": "^4.2.1",
+    "@tailwindcss/vite": "^4.2.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "diff-match-patch": "^1.0.5",
