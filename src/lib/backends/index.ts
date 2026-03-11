@@ -134,6 +134,20 @@ function stripTrailingSlash(url: string): string {
   return url.replace(/\/+$/, '');
 }
 
+/**
+ * Rewrites an absolute backend URL to go through the Vite dev-server proxy,
+ * avoiding CORS issues when the browser calls local LLM servers.
+ *
+ * Pattern: /llm-proxy/<encodeURIComponent(baseUrl)>/<path>
+ */
+function proxyUrl(baseUrl: string, path: string): string {
+  if (typeof window !== 'undefined' && window.location.port === '3000') {
+    const encoded = encodeURIComponent(stripTrailingSlash(baseUrl));
+    return `/llm-proxy/${encoded}${path}`;
+  }
+  return `${stripTrailingSlash(baseUrl)}${path}`;
+}
+
 async function fetchWithErrorHandling(
   url: string,
   options: RequestInit,
@@ -179,7 +193,9 @@ async function fetchWithErrorHandling(
 // ============================================================================
 
 function createLMStudioAdapter(backend: Backend): BackendAdapter {
-  const baseUrl = stripTrailingSlash(backend.baseUrl || 'http://localhost:1234/v1');
+  const rawBaseUrl = stripTrailingSlash(backend.baseUrl || 'http://localhost:1234');
+  // Ensure we have a /v1 suffix for the OpenAI-compatible API
+  const apiBase = rawBaseUrl.endsWith('/v1') ? rawBaseUrl : `${rawBaseUrl}/v1`;
   const apiKey = backend.apiKey || 'lm-studio'; // LM Studio accepts any key
 
   function headers(): Record<string, string> {
@@ -192,7 +208,7 @@ function createLMStudioAdapter(backend: Backend): BackendAdapter {
   return {
     async testConnection(): Promise<boolean> {
       const response = await fetchWithErrorHandling(
-        `${baseUrl}/models`,
+        proxyUrl(apiBase, '/models'),
         { method: 'GET', headers: headers() },
         'lm-studio',
         'testConnection'
@@ -203,7 +219,7 @@ function createLMStudioAdapter(backend: Backend): BackendAdapter {
 
     async listModels(): Promise<string[]> {
       const response = await fetchWithErrorHandling(
-        `${baseUrl}/models`,
+        proxyUrl(apiBase, '/models'),
         { method: 'GET', headers: headers() },
         'lm-studio',
         'listModels'
@@ -223,7 +239,7 @@ function createLMStudioAdapter(backend: Backend): BackendAdapter {
     async generateCompletion(request: CompletionRequest): Promise<string> {
       const body = buildOpenAIRequestBody(request, false);
       const response = await fetchWithErrorHandling(
-        `${baseUrl}/chat/completions`,
+        proxyUrl(apiBase, '/chat/completions'),
         { method: 'POST', headers: headers(), body: JSON.stringify(body) },
         'lm-studio',
         'generateCompletion'
@@ -244,7 +260,7 @@ function createLMStudioAdapter(backend: Backend): BackendAdapter {
     ): AsyncGenerator<string> {
       const body = buildOpenAIRequestBody(request, true);
       const response = await fetchWithErrorHandling(
-        `${baseUrl}/chat/completions`,
+        proxyUrl(apiBase, '/chat/completions'),
         { method: 'POST', headers: headers(), body: JSON.stringify(body) },
         'lm-studio',
         'generateCompletionStream'
@@ -285,9 +301,8 @@ function createOllamaAdapter(backend: Backend): BackendAdapter {
 
   return {
     async testConnection(): Promise<boolean> {
-      // Ollama responds to GET / with a "Ollama is running" message
       const response = await fetchWithErrorHandling(
-        baseUrl,
+        proxyUrl(baseUrl, '/'),
         { method: 'GET', headers: headers() },
         'ollama',
         'testConnection'
@@ -298,7 +313,7 @@ function createOllamaAdapter(backend: Backend): BackendAdapter {
 
     async listModels(): Promise<string[]> {
       const response = await fetchWithErrorHandling(
-        `${baseUrl}/api/tags`,
+        proxyUrl(baseUrl, '/api/tags'),
         { method: 'GET', headers: headers() },
         'ollama',
         'listModels'
@@ -316,7 +331,7 @@ function createOllamaAdapter(backend: Backend): BackendAdapter {
     async generateCompletion(request: CompletionRequest): Promise<string> {
       const body = buildOllamaRequestBody(request, false);
       const response = await fetchWithErrorHandling(
-        `${baseUrl}/api/chat`,
+        proxyUrl(baseUrl, '/api/chat'),
         { method: 'POST', headers: headers(), body: JSON.stringify(body) },
         'ollama',
         'generateCompletion'
@@ -337,7 +352,7 @@ function createOllamaAdapter(backend: Backend): BackendAdapter {
     ): AsyncGenerator<string> {
       const body = buildOllamaRequestBody(request, true);
       const response = await fetchWithErrorHandling(
-        `${baseUrl}/api/chat`,
+        proxyUrl(baseUrl, '/api/chat'),
         { method: 'POST', headers: headers(), body: JSON.stringify(body) },
         'ollama',
         'generateCompletionStream'
@@ -464,7 +479,7 @@ function createOpenAICompatibleAdapter(backend: Backend): BackendAdapter {
   return {
     async testConnection(): Promise<boolean> {
       const response = await fetchWithErrorHandling(
-        `${baseUrl}/models`,
+        proxyUrl(baseUrl, '/models'),
         { method: 'GET', headers: headers() },
         'openai-compatible',
         'testConnection'
@@ -475,7 +490,7 @@ function createOpenAICompatibleAdapter(backend: Backend): BackendAdapter {
 
     async listModels(): Promise<string[]> {
       const response = await fetchWithErrorHandling(
-        `${baseUrl}/models`,
+        proxyUrl(baseUrl, '/models'),
         { method: 'GET', headers: headers() },
         'openai-compatible',
         'listModels'
@@ -495,7 +510,7 @@ function createOpenAICompatibleAdapter(backend: Backend): BackendAdapter {
     async generateCompletion(request: CompletionRequest): Promise<string> {
       const body = buildOpenAIRequestBody(request, false);
       const response = await fetchWithErrorHandling(
-        `${baseUrl}/chat/completions`,
+        proxyUrl(baseUrl, '/chat/completions'),
         { method: 'POST', headers: headers(), body: JSON.stringify(body) },
         'openai-compatible',
         'generateCompletion'
@@ -516,7 +531,7 @@ function createOpenAICompatibleAdapter(backend: Backend): BackendAdapter {
     ): AsyncGenerator<string> {
       const body = buildOpenAIRequestBody(request, true);
       const response = await fetchWithErrorHandling(
-        `${baseUrl}/chat/completions`,
+        proxyUrl(baseUrl, '/chat/completions'),
         { method: 'POST', headers: headers(), body: JSON.stringify(body) },
         'openai-compatible',
         'generateCompletionStream'
