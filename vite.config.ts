@@ -35,7 +35,9 @@ export default defineConfig({
             return;
           }
 
-          const targetUrl = new URL(targetPath, baseUrl);
+          const targetUrl = new URL(
+            baseUrl.replace(/\/$/, '') + targetPath
+          );
 
           const headers: Record<string, string> = {};
           for (const [key, value] of Object.entries(req.headers)) {
